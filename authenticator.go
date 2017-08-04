@@ -5,13 +5,28 @@
 package authenticator
 
 import (
+	"encoding/json"
 	"errors"
+	"time"
 )
+
+var ErrUnauthorized = errors.New("Authentication failed")
+
+type AuthResponse struct {
+	Ok bool `json:"ok"`
+}
 
 type Credentials map[string]interface{}
 
 type Authenticator struct {
+	Conn      Connector
 	Providers []string
+}
+
+func New(providers []string) *Authenticator {
+	return &Authenticator{
+		Providers: providers,
+	}
 }
 
 func (a *Authenticator) Authenticate(c Credentials) error {
@@ -25,7 +40,7 @@ func (a *Authenticator) Authenticate(c Credentials) error {
 	}
 
 	if err != nil {
-		return errors.New("Authentication failed")
+		return ErrUnauthorized
 	}
 
 	// check if user exists in user store
@@ -43,10 +58,8 @@ func (a *Authenticator) Authenticate(c Credentials) error {
 
 func (a *Authenticator) auth(provider string, c Credentials) error {
 	switch provider {
-	case "local":
-		return a.authLocal(c)
-	case "fake":
-		return a.authFake(c)
+	case "local", "fake":
+		return a.authGeneric(provider, c)
 	default:
 		return errors.New("Unknown provider type")
 	}
@@ -64,4 +77,29 @@ func (a *Authenticator) authLocal(c Credentials) error {
 func (a *Authenticator) authFake(c Credentials) error {
 	// remove
 	return errors.New("User not found")
+}
+
+func (a *Authenticator) authGeneric(provider string, c Credentials) error {
+	var ar AuthResponse
+
+	data, err := json.Marshal(c)
+	if err != nil {
+		return err
+	}
+
+	resp, err := a.Conn.Request(provider+".auth", data, time.Second)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(resp.Data, &ar)
+	if err != nil {
+		return err
+	}
+
+	if !ar.Ok {
+		return errors.New("authentication failed!")
+	}
+
+	return nil
 }
