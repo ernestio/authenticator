@@ -35,29 +35,36 @@ func (f *FakeConnector) Request(subj string, data []byte, timeout time.Duration)
 type AuthenticatorTestSuite struct {
 	suite.Suite
 	Auth       *Authenticator
-	Assertions map[string]interface{}
+	Assertions []struct {
+		Name               string
+		Username, Password string
+		Expected           error
+	}
 }
 
 // SetupTest : sets up test suite
 func (suite *AuthenticatorTestSuite) SetupTest() {
 	suite.Auth = New([]string{"fake"})
 	suite.Auth.Conn = &FakeConnector{}
-	suite.Assertions = map[string]interface{}{
-		"invalid user": map[string]interface{}{
-			"data": Credentials{"username": "bad-user", "password": "password"}, "error": ErrUnauthorized,
-		},
-		"valid user": map[string]interface{}{
-			"data": Credentials{"username": "john", "password": "password"}, "error": nil,
-		},
+	suite.Assertions = []struct {
+		Name               string
+		Username, Password string
+		Expected           error
+	}{
+		{"invalid user", "bad-user", "password", ErrUnauthorized},
+		{"valid user", "john", "password", nil},
 	}
 }
 
 func (suite *AuthenticatorTestSuite) TestAuthSingleProvider() {
-	for name, scenario := range suite.Assertions {
-		suite.T().Run(name, func(t *testing.T) {
-			c := scenario.(map[string]interface{})["data"].(Credentials)
+	for _, scenario := range suite.Assertions {
+		suite.T().Run(scenario.Name, func(t *testing.T) {
+			c := Credentials{
+				"username": scenario.Username,
+				"password": scenario.Password,
+			}
 			err := suite.Auth.Authenticate(c)
-			suite.Equal(scenario.(map[string]interface{})["error"], err)
+			suite.Equal(err, scenario.Expected)
 		})
 	}
 }

@@ -79,7 +79,7 @@ func (a *Authenticator) auth(provider string, c Credentials) error {
 	}
 
 	if !ar.Ok {
-		return errors.New("authentication failed!")
+		return ErrUnauthorized
 	}
 
 	return nil
