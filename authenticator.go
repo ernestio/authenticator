@@ -57,30 +57,11 @@ func (a *Authenticator) Authenticate(c Credentials) error {
 }
 
 func (a *Authenticator) auth(provider string, c Credentials) error {
-	switch provider {
-	case "local", "fake":
-		return a.authGeneric(provider, c)
-	default:
-		return errors.New("Unknown provider type")
-	}
-}
-
-func (a *Authenticator) authLocal(c Credentials) error {
-	// remove
-	if c["username"] == "john" {
-		return nil
-	} else {
-		return errors.New("User not found")
-	}
-}
-
-func (a *Authenticator) authFake(c Credentials) error {
-	// remove
-	return errors.New("User not found")
-}
-
-func (a *Authenticator) authGeneric(provider string, c Credentials) error {
 	var ar AuthResponse
+
+	if !a.validProvider(provider) {
+		return errors.New("unknown provider type")
+	}
 
 	data, err := json.Marshal(c)
 	if err != nil {
@@ -102,4 +83,13 @@ func (a *Authenticator) authGeneric(provider string, c Credentials) error {
 	}
 
 	return nil
+}
+
+func (a *Authenticator) validProvider(provider string) bool {
+	for _, p := range a.Providers {
+		if p == provider {
+			return true
+		}
+	}
+	return false
 }
