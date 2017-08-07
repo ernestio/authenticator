@@ -6,6 +6,7 @@ package authenticator
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
@@ -16,43 +17,84 @@ import (
 type FakeConnector struct{}
 
 func (f *FakeConnector) Request(subj string, data []byte, timeout time.Duration) (*nats.Msg, error) {
+	switch subj {
+	case "fake.auth":
+		return fakeAuth(data)
+	case "user.get":
+		return userGet(data)
+	case "user.create":
+		return userCreate(data)
+	default:
+		return &nats.Msg{Data: []byte(`{"ok": false, "message": "Unknown subject type"}`)}, nil
+	}
+}
+
+func fakeAuth(data []byte) (*nats.Msg, error) {
 	var c Credentials
 
 	err := json.Unmarshal(data, &c)
 	if err != nil {
-		return &nats.Msg{Data: []byte(`{"error": "could not load credentials"}`)}, nil
+		return &nats.Msg{Data: []byte(`{"ok": false, "message": "Could not load credentials"}`)}, nil
 	}
 
-	// remove
-	if c["username"] == "john" {
-		return &nats.Msg{Data: []byte(`{"ok": true}`)}, nil
+	if c["username"] == "john" && c["password"] == "secret" {
+		return &nats.Msg{Data: []byte(`{"ok": true, "token": "xxxx"}`)}, nil
 	}
 
-	return &nats.Msg{Data: []byte(`{"ok": false}`)}, nil
+	return &nats.Msg{Data: []byte(`{"ok": false, "message": "Authentication Failed"}`)}, nil
 }
 
-// AuthenticatorTestSuite : Test suite for migration
+func userGet(data []byte) (*nats.Msg, error) {
+	var u User
+
+	err := json.Unmarshal(data, &u)
+	if err != nil {
+		return &nats.Msg{Data: []byte(`{"_error": "Not found", "_code": "404"}`)}, nil
+	}
+
+	if u.Username == "john" {
+		return &nats.Msg{Data: []byte(`{"username": "john", "password": "xxxx"}`)}, nil
+	}
+
+	return &nats.Msg{Data: []byte(`{"_error": "Not found", "_code": "404"}`)}, nil
+}
+
+func userCreate(data []byte) (*nats.Msg, error) {
+	var u User
+
+	err := json.Unmarshal(data, &u)
+	if err != nil {
+		return &nats.Msg{Data: []byte(`{"id": 0}`)}, nil
+	}
+
+	msg := fmt.Sprintf("{\"username\": \"%s\"}", u.Username)
+	return &nats.Msg{Data: []byte(msg)}, nil
+}
+
+// AuthenticatorTestSuite : Test suite
 type AuthenticatorTestSuite struct {
 	suite.Suite
 	Auth       *Authenticator
 	Assertions []struct {
-		Name               string
-		Username, Password string
-		Expected           error
+		Name     string
+		Username string
+		Password string
+		Expected error
 	}
 }
 
-// SetupTest : sets up test suite
+// SetupTest : Sets up test suite
 func (suite *AuthenticatorTestSuite) SetupTest() {
 	suite.Auth = New([]string{"fake"})
 	suite.Auth.Conn = &FakeConnector{}
 	suite.Assertions = []struct {
-		Name               string
-		Username, Password string
-		Expected           error
+		Name     string
+		Username string
+		Password string
+		Expected error
 	}{
 		{"invalid user", "bad-user", "password", ErrUnauthorized},
-		{"valid user", "john", "password", nil},
+		{"valid user", "john", "secret", nil},
 	}
 }
 
@@ -69,7 +111,7 @@ func (suite *AuthenticatorTestSuite) TestAuthSingleProvider() {
 	}
 }
 
-// TestAuthenticatorTestSuite : Test suite for migration
+// TestAuthenticatorTestSuite : Run test suite
 func TestAuthenticatorTestSuite(t *testing.T) {
 	suite.Run(t, new(AuthenticatorTestSuite))
 }

@@ -16,7 +16,16 @@ type AuthResponse struct {
 	Ok bool `json:"ok"`
 }
 
+type UserResponse struct {
+	Id int `json:"id"`
+}
+
 type Credentials map[string]interface{}
+
+type User struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
 
 type Authenticator struct {
 	Conn      Connector
@@ -43,15 +52,31 @@ func (a *Authenticator) Authenticate(c Credentials) error {
 		return ErrUnauthorized
 	}
 
-	// check if user exists in user store
-	// u, err := getUser(c["username"])
-	// if err != nil {
-	// 	return err
-	// }
+	// check if user exists
+	var ur UserResponse
 
-	// if u == nil {
-	// 	// create user
-	// }
+	data, err = json.Marhsal(c)
+	if err != nil {
+		return err
+	}
+
+	resp, err := a.Conn.Request("user.get", data, time.Second)
+	if err != nil {
+		return err
+	}
+
+	json.Unmarshal(resp.Data, &ur)
+	if err != nil {
+		return err
+	}
+
+	// create user if missing
+	if ur.Id == 0 {
+		resp, err := a.Conn.Request("user.set", data, time.Second)
+		if err != nil {
+			return err
+		}
+	}
 
 	return err
 }
