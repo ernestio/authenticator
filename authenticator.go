@@ -17,7 +17,7 @@ type AuthResponse struct {
 }
 
 type UserResponse struct {
-	Id int `json:"id"`
+	Code string `json:"_code"`
 }
 
 type Credentials map[string]interface{}
@@ -25,6 +25,7 @@ type Credentials map[string]interface{}
 type User struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
+	Type     string `json:"type"`
 }
 
 type Authenticator struct {
@@ -40,10 +41,12 @@ func New(providers []string) *Authenticator {
 
 func (a *Authenticator) Authenticate(c Credentials) error {
 	var err error
+	var userType string
 
 	for _, provider := range a.Providers {
 		err = a.auth(provider, c)
 		if err == nil {
+			userType = provider
 			break
 		}
 	}
@@ -52,10 +55,19 @@ func (a *Authenticator) Authenticate(c Credentials) error {
 		return ErrUnauthorized
 	}
 
-	// check if user exists
+	// create user if one doesn't exist
+	err = a.createUser(userType, c)
+	if err != nil {
+		return err
+	}
+
+	return err
+}
+
+func (a *Authenticator) createUser(userType string, c Credentials) error {
 	var ur UserResponse
 
-	data, err = json.Marhsal(c)
+	data, err := json.Marshal(c)
 	if err != nil {
 		return err
 	}
@@ -70,15 +82,14 @@ func (a *Authenticator) Authenticate(c Credentials) error {
 		return err
 	}
 
-	// create user if missing
-	if ur.Id == 0 {
-		resp, err := a.Conn.Request("user.set", data, time.Second)
+	if ur.Code == "404" {
+		_, err := a.Conn.Request("user.set", data, time.Second)
 		if err != nil {
 			return err
 		}
 	}
 
-	return err
+	return nil
 }
 
 func (a *Authenticator) auth(provider string, c Credentials) error {
