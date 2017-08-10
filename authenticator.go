@@ -8,8 +8,11 @@ import (
 	"encoding/json"
 	"errors"
 	"time"
+
+	jwt "github.com/dgrijalva/jwt-go"
 )
 
+var Secret string
 var ErrUnauthorized = errors.New("Authentication failed")
 
 type Credentials struct {
@@ -36,12 +39,13 @@ func New(providers []string) *Authenticator {
 	}
 }
 
-func (a *Authenticator) Authenticate(c Credentials) error {
+func (a *Authenticator) Authenticate(c Credentials) (string, error) {
 	var err error
+	var token string
 	var userType string
 
 	for _, provider := range a.Providers {
-		err = a.auth(provider, c)
+		token, err = a.auth(provider, c)
 		if err == nil {
 			userType = provider
 			break
@@ -49,18 +53,20 @@ func (a *Authenticator) Authenticate(c Credentials) error {
 	}
 
 	if err != nil {
-		return ErrUnauthorized
+		return "", ErrUnauthorized
 	}
 
 	// create user if one doesn't exist
 	if userType != "local" {
 		err = a.createUser(userType, c)
 		if err != nil {
-			return err
+			return "", err
 		}
 	}
 
-	return err
+	// token gen here?
+
+	return token, err
 }
 
 func (a *Authenticator) createUser(userType string, c Credentials) error {
@@ -91,41 +97,42 @@ func (a *Authenticator) createUser(userType string, c Credentials) error {
 	return nil
 }
 
-func (a *Authenticator) auth(provider string, c Credentials) error {
+func (a *Authenticator) auth(provider string, c Credentials) (string, error) {
 	var ar AuthResponse
 
 	if !a.validProvider(provider) {
-		return errors.New("Unknown provider type")
+		return "", errors.New("Unknown provider type")
 	}
 
 	if provider == "local" {
-		err := a.localAuth(c)
+		token, err := a.localAuth(c)
 		if err != nil {
-			return err
+			return "", err
 		}
-		return nil
+		return token, nil
 	}
 
 	data, err := json.Marshal(c)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	resp, err := a.Conn.Request(provider+".auth", data, time.Second)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	err = json.Unmarshal(resp.Data, &ar)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	if !ar.OK {
-		return ErrUnauthorized
+	if ar.OK {
+		// return token and nil err
+		return "", nil
 	}
 
-	return nil
+	return "", ErrUnauthorized
 }
 
 func (a *Authenticator) validProvider(provider string) bool {
@@ -156,13 +163,23 @@ func (a *Authenticator) getUser(username string) (*User, error) {
 	return &u, nil
 }
 
-func (a *Authenticator) localAuth(c Credentials) error {
+func (a *Authenticator) localAuth(c Credentials) (string, error) {
 	u, err := a.getUser(c.Username)
 	if err != nil {
-		return err
+		return "", err
 	}
 	if u.valid(c) {
-		return nil
+		token := jwt.New(jwt.SigningMethodHS256)
+		claims := token.Claims.(jwt.MapClaims)
+		claims["username"] = u.Username
+		claims["admin"] = u.Admin
+		claims["exp"] = time.Now().Add(time.Hour * 24).Unix()
+		tokenString, err := token.SignedString([]byte(Secret))
+		if err != nil {
+			return "", err
+		}
+
+		return tokenString, nil
 	}
-	return ErrUnauthorized
+	return "", ErrUnauthorized
 }

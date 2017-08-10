@@ -12,6 +12,7 @@ type User struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 	Salt     string `json:"salt"`
+	Admin    bool   `json:"admin"`
 	//	Type     string `json:"type"`
 }
 

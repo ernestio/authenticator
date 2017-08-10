@@ -36,7 +36,8 @@ func TestAuthenticate(t *testing.T) {
 				Password: tt.password,
 			}
 			conn := Auth.Conn.(*FakeConnector)
-			err := Auth.Authenticate(c)
+			token, err := Auth.Authenticate(c)
+			fmt.Println(token)
 			if err != tt.expected {
 				t.Errorf("Expected '%s' to be '%v', got '%s'", tt.username, tt.expected, err)
 			}
