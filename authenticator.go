@@ -12,7 +12,8 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 )
 
-var Secret string
+const DEFAULTEXPIRY = time.Hour * 24
+
 var ErrUnauthorized = errors.New("Authentication failed")
 
 type Credentials struct {
@@ -21,7 +22,8 @@ type Credentials struct {
 }
 
 type AuthResponse struct {
-	OK bool `json:"ok"`
+	OK    bool   `json:"ok"`
+	Token string `json:"token"`
 }
 
 type UserResponse struct {
@@ -31,17 +33,20 @@ type UserResponse struct {
 type Authenticator struct {
 	Conn      Connector
 	Providers []string
+	Expiry    time.Duration
+	Secret    string
 }
 
 func New(providers []string) *Authenticator {
 	return &Authenticator{
 		Providers: providers,
+		Expiry:    DEFAULTEXPIRY,
 	}
 }
 
-func (a *Authenticator) Authenticate(c Credentials) (string, error) {
+func (a *Authenticator) Authenticate(c Credentials) (*AuthResponse, error) {
 	var err error
-	var token string
+	var token *jwt.Token
 	var userType string
 
 	for _, provider := range a.Providers {
@@ -53,20 +58,23 @@ func (a *Authenticator) Authenticate(c Credentials) (string, error) {
 	}
 
 	if err != nil {
-		return "", ErrUnauthorized
+		return nil, ErrUnauthorized
 	}
 
 	// create user if one doesn't exist
 	if userType != "local" {
 		err = a.createUser(userType, c)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 	}
 
-	// token gen here?
+	tokenString, err := token.SignedString([]byte(a.Secret))
+	if err != nil {
+		return nil, err
+	}
 
-	return token, err
+	return &AuthResponse{OK: true, Token: tokenString}, nil
 }
 
 func (a *Authenticator) createUser(userType string, c Credentials) error {
@@ -97,42 +105,41 @@ func (a *Authenticator) createUser(userType string, c Credentials) error {
 	return nil
 }
 
-func (a *Authenticator) auth(provider string, c Credentials) (string, error) {
+func (a *Authenticator) auth(provider string, c Credentials) (*jwt.Token, error) {
 	var ar AuthResponse
 
 	if !a.validProvider(provider) {
-		return "", errors.New("Unknown provider type")
+		return nil, errors.New("Unknown provider type")
 	}
 
 	if provider == "local" {
 		token, err := a.localAuth(c)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 		return token, nil
 	}
 
 	data, err := json.Marshal(c)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	resp, err := a.Conn.Request(provider+".auth", data, time.Second)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	err = json.Unmarshal(resp.Data, &ar)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	if ar.OK {
-		// return token and nil err
-		return "", nil
+		return generateToken(a.Expiry, c.Username), nil
 	}
 
-	return "", ErrUnauthorized
+	return nil, ErrUnauthorized
 }
 
 func (a *Authenticator) validProvider(provider string) bool {
@@ -163,23 +170,18 @@ func (a *Authenticator) getUser(username string) (*User, error) {
 	return &u, nil
 }
 
-func (a *Authenticator) localAuth(c Credentials) (string, error) {
+func (a *Authenticator) localAuth(c Credentials) (*jwt.Token, error) {
 	u, err := a.getUser(c.Username)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	if u.valid(c) {
-		token := jwt.New(jwt.SigningMethodHS256)
-		claims := token.Claims.(jwt.MapClaims)
-		claims["username"] = u.Username
-		claims["admin"] = u.Admin
-		claims["exp"] = time.Now().Add(time.Hour * 24).Unix()
-		tokenString, err := token.SignedString([]byte(Secret))
-		if err != nil {
-			return "", err
-		}
 
-		return tokenString, nil
+	if !u.valid(c) {
+		return nil, ErrUnauthorized
 	}
-	return "", ErrUnauthorized
+
+	token := generateToken(a.Expiry, u.Username)
+	token.Claims.(jwt.MapClaims)["admin"] = u.Admin
+
+	return token, nil
 }

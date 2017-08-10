@@ -41,7 +41,6 @@ func TestAuthenticate(t *testing.T) {
 			if err != tt.expected {
 				t.Errorf("Expected '%s' to be '%v', got '%s'", tt.username, tt.expected, err)
 			}
-			fmt.Println(conn.Events)
 			if tt.username == "valid-local-user" {
 				if len(conn.Events["user.get"]) != 1 {
 					t.Errorf("Expected 1 user.get message, got '%d' ", len(conn.Events["user.get"]))
