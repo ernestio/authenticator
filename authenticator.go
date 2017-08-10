@@ -20,14 +20,6 @@ type UserResponse struct {
 	Code string `json:"_code"`
 }
 
-type Credentials map[string]interface{}
-
-type User struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-	Type     string `json:"type"`
-}
-
 type Authenticator struct {
 	Conn      Connector
 	Providers []string
@@ -39,12 +31,12 @@ func New(providers []string) *Authenticator {
 	}
 }
 
-func (a *Authenticator) Authenticate(c Credentials) error {
+func (a *Authenticator) Authenticate(u User) error {
 	var err error
 	var userType string
 
 	for _, provider := range a.Providers {
-		err = a.auth(provider, c)
+		err = a.auth(provider, u)
 		if err == nil {
 			userType = provider
 			break
@@ -56,18 +48,20 @@ func (a *Authenticator) Authenticate(c Credentials) error {
 	}
 
 	// create user if one doesn't exist
-	err = a.createUser(userType, c)
-	if err != nil {
-		return err
+	if userType != "local" {
+		err = a.createUser(userType, u)
+		if err != nil {
+			return err
+		}
 	}
 
 	return err
 }
 
-func (a *Authenticator) createUser(userType string, c Credentials) error {
+func (a *Authenticator) createUser(userType string, u User) error {
 	var ur UserResponse
 
-	data, err := json.Marshal(c)
+	data, err := json.Marshal(u)
 	if err != nil {
 		return err
 	}
@@ -92,14 +86,22 @@ func (a *Authenticator) createUser(userType string, c Credentials) error {
 	return nil
 }
 
-func (a *Authenticator) auth(provider string, c Credentials) error {
+func (a *Authenticator) auth(provider string, u User) error {
 	var ar AuthResponse
 
 	if !a.validProvider(provider) {
-		return errors.New("unknown provider type")
+		return errors.New("Unknown provider type")
 	}
 
-	data, err := json.Marshal(c)
+	if provider == "local" {
+		err := a.localAuth(u)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
+	data, err := json.Marshal(u)
 	if err != nil {
 		return err
 	}
@@ -128,4 +130,34 @@ func (a *Authenticator) validProvider(provider string) bool {
 		}
 	}
 	return false
+}
+
+func (a *Authenticator) getUser(username string) (*User, error) {
+	var u User
+
+	resp, err := a.Conn.Request("user.get", []byte(`{"username": "`+username+`"}`), time.Second)
+	if err != nil {
+		return nil, err
+	}
+
+	err = json.Unmarshal(resp.Data, &u)
+	if err != nil {
+		return nil, err
+	}
+
+	if u.ID == 0 {
+		return nil, ErrUnauthorized
+	}
+	return &u, nil
+}
+
+func (a *Authenticator) localAuth(u User) error {
+	eu, err := a.getUser(u.Username)
+	if err != nil {
+		return err
+	}
+	if u.valid(eu) {
+		return nil
+	}
+	return ErrUnauthorized
 }

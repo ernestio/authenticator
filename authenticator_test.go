@@ -5,64 +5,66 @@
 package authenticator
 
 import (
+	"fmt"
 	"testing"
-
-	"github.com/stretchr/testify/suite"
 )
 
-// AuthenticatorTestSuite : Test suite
-type AuthenticatorTestSuite struct {
-	suite.Suite
-	Auth       *Authenticator
-	Assertions []struct {
-		Name     string
-		Username string
-		Password string
-		Exists   bool
-		Expected error
-	}
-}
+func TestAuthenticate(t *testing.T) {
 
-// SetupTest : Test suite setup
-func (suite *AuthenticatorTestSuite) SetupTest() {
-	suite.Auth = New([]string{"local", "fake"})
-	suite.Auth.Conn = NewFakeConnector()
-	suite.Assertions = []struct {
-		Name     string
-		Username string
-		Password string
-		Exists   bool
-		Expected error
+	authenticateTests := []struct {
+		username string
+		password string
+		exists   bool
+		expected error
 	}{
-		{"valid existing user", "john", "secret", true, nil},
-		{"valid new user", "jane", "secret", false, nil},
-		{"invalid user", "bad-user", "password", false, ErrUnauthorized},
+		{"valid-local-user", "secret", true, nil},
+		{"valid-local-user-bad-password", "wrong", true, ErrUnauthorized},
+		{"invalid-local-user", "secret", false, ErrUnauthorized},
+		{"valid-federation-new-user", "secret", false, nil},
+		{"valid-federation-new-user-bad-password", "wrong", false, ErrUnauthorized},
+		{"valid-federation-existing-user", "secret", true, nil},
+		{"valid-federation-existing-user-bad-password", "wrong", true, ErrUnauthorized},
+		{"invalid-federation-user", "secret", true, ErrUnauthorized},
 	}
-}
 
-// TestAuthProviders : Tests authentication against a list of providers
-func (suite *AuthenticatorTestSuite) TestAuthProviders() {
-	for _, scenario := range suite.Assertions {
-		suite.SetupTest()
-		suite.T().Run(scenario.Name, func(t *testing.T) {
-			c := Credentials{
-				"username": scenario.Username,
-				"password": scenario.Password,
+	for _, tt := range authenticateTests {
+		t.Run(tt.username, func(t *testing.T) {
+			Auth := New([]string{"local", "federation"})
+			Auth.Conn = NewFakeConnector()
+			u := User{
+				Username: tt.username,
+				Password: tt.password,
 			}
-			conn := suite.Auth.Conn.(*FakeConnector)
-			err := suite.Auth.Authenticate(c)
-			suite.Equal(err, scenario.Expected)
-			if scenario.Expected == nil {
-				suite.Equal(len(conn.Events["user.get"]), 1)
-				if !scenario.Exists {
-					suite.Equal(len(conn.Events["user.set"]), 1)
+			conn := Auth.Conn.(*FakeConnector)
+			err := Auth.Authenticate(u)
+			if err != tt.expected {
+				t.Errorf("Expected '%s' to be '%v', got '%s'", tt.username, tt.expected, err)
+			}
+			fmt.Println(conn.Events)
+			if tt.username == "valid-local-user" {
+				if len(conn.Events["user.get"]) != 1 {
+					t.Errorf("Expected 1 user.get message, got '%d' ", len(conn.Events["user.get"]))
+				}
+			}
+			if tt.username == "valid-federation-existing-user" {
+				if len(conn.Events["user.get"]) != 2 {
+					t.Errorf("Expected 2 user.get message, got '%d' ", len(conn.Events["user.get"]))
+				}
+				if len(conn.Events["federation.auth"]) != 1 {
+					t.Errorf("Expected 1 federation.auth message, got '%d' ", len(conn.Events["federation.auth"]))
+				}
+			}
+			if tt.username == "valid-federation-new-user" {
+				if len(conn.Events["user.get"]) != 2 {
+					t.Errorf("Expected 2 user.get message, got '%d' ", len(conn.Events["user.get"]))
+				}
+				if len(conn.Events["federation.auth"]) != 1 {
+					t.Errorf("Expected 1 federation.auth message, got '%d' ", len(conn.Events["federation.auth"]))
+				}
+				if len(conn.Events["user.set"]) != 1 {
+					t.Errorf("Expected 1 user.set message, got '%d' ", len(conn.Events["user.set"]))
 				}
 			}
 		})
 	}
-}
-
-// TestAuthenticatorTestSuite : Run test suite
-func TestAuthenticatorTestSuite(t *testing.T) {
-	suite.Run(t, new(AuthenticatorTestSuite))
 }

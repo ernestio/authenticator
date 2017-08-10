@@ -2,7 +2,6 @@ package authenticator
 
 import (
 	"encoding/json"
-	"fmt"
 	"time"
 
 	"github.com/nats-io/nats"
@@ -22,28 +21,28 @@ func (f *FakeConnector) Request(subj string, data []byte, timeout time.Duration)
 	f.Events[subj] = append(f.Events[subj], &nats.Msg{Subject: subj, Data: data})
 
 	switch subj {
-	case "fake.auth":
-		return fakeAuth(data)
+	case "federation.auth":
+		return federationAuth(data)
 	case "user.get":
 		return userGet(data)
-	case "user.create":
-		return userCreate(data)
+	case "user.set":
+		return userSet(data)
 	default:
 		return &nats.Msg{Data: []byte(`{"ok": false, "message": "Unknown subject type"}`)}, nil
 	}
 }
 
-func fakeAuth(data []byte) (*nats.Msg, error) {
-	var c Credentials
+func federationAuth(data []byte) (*nats.Msg, error) {
+	var u User
 
-	err := json.Unmarshal(data, &c)
+	err := json.Unmarshal(data, &u)
 	if err != nil {
 		return &nats.Msg{Data: []byte(`{"ok": false, "message": "Could not load credentials"}`)}, nil
 	}
 
-	if c["username"] == "john" && c["password"] == "secret" ||
-		c["username"] == "jane" && c["password"] == "secret" {
-		return &nats.Msg{Data: []byte(`{"ok": true, "token": "xxxx"}`)}, nil
+	if u.Username == "valid-federation-new-user" && u.Password == "secret" ||
+		u.Username == "valid-federation-existing-user" && u.Password == "secret" {
+		return &nats.Msg{Data: []byte(`{"ok": true}`)}, nil
 	}
 
 	return &nats.Msg{Data: []byte(`{"ok": false, "message": "Authentication Failed"}`)}, nil
@@ -57,14 +56,18 @@ func userGet(data []byte) (*nats.Msg, error) {
 		return &nats.Msg{Data: []byte(`{"_error": "Not found", "_code": "404"}`)}, nil
 	}
 
-	if u.Username == "john" {
-		return &nats.Msg{Data: []byte(`{"username": "john", "password": "xxxx"}`)}, nil
+	if u.Username == "valid-local-user" {
+		return &nats.Msg{Data: []byte(`{"id": 1, "username": "valid-local-user", "password": "secret"}`)}, nil
+	}
+
+	if u.Username == "valid-federation-existing-user" {
+		return &nats.Msg{Data: []byte(`{"id": 1, "username": "valid-federation-existing-user", "password": ""}`)}, nil
 	}
 
 	return &nats.Msg{Data: []byte(`{"_error": "Not found", "_code": "404"}`)}, nil
 }
 
-func userCreate(data []byte) (*nats.Msg, error) {
+func userSet(data []byte) (*nats.Msg, error) {
 	var u User
 
 	err := json.Unmarshal(data, &u)
@@ -72,6 +75,5 @@ func userCreate(data []byte) (*nats.Msg, error) {
 		return &nats.Msg{Data: []byte(`{"id": 0}`)}, nil
 	}
 
-	msg := fmt.Sprintf("{\"username\": \"%s\"}", u.Username)
-	return &nats.Msg{Data: []byte(msg)}, nil
+	return &nats.Msg{Data: []byte(`{"username": "` + u.Username + `"}`)}, nil
 }
