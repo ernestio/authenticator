@@ -12,8 +12,13 @@ import (
 
 var ErrUnauthorized = errors.New("Authentication failed")
 
+type Credentials struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
 type AuthResponse struct {
-	Ok bool `json:"ok"`
+	OK bool `json:"ok"`
 }
 
 type UserResponse struct {
@@ -31,12 +36,12 @@ func New(providers []string) *Authenticator {
 	}
 }
 
-func (a *Authenticator) Authenticate(u User) error {
+func (a *Authenticator) Authenticate(c Credentials) error {
 	var err error
 	var userType string
 
 	for _, provider := range a.Providers {
-		err = a.auth(provider, u)
+		err = a.auth(provider, c)
 		if err == nil {
 			userType = provider
 			break
@@ -49,7 +54,7 @@ func (a *Authenticator) Authenticate(u User) error {
 
 	// create user if one doesn't exist
 	if userType != "local" {
-		err = a.createUser(userType, u)
+		err = a.createUser(userType, c)
 		if err != nil {
 			return err
 		}
@@ -58,10 +63,10 @@ func (a *Authenticator) Authenticate(u User) error {
 	return err
 }
 
-func (a *Authenticator) createUser(userType string, u User) error {
+func (a *Authenticator) createUser(userType string, c Credentials) error {
 	var ur UserResponse
 
-	data, err := json.Marshal(u)
+	data, err := json.Marshal(c)
 	if err != nil {
 		return err
 	}
@@ -86,7 +91,7 @@ func (a *Authenticator) createUser(userType string, u User) error {
 	return nil
 }
 
-func (a *Authenticator) auth(provider string, u User) error {
+func (a *Authenticator) auth(provider string, c Credentials) error {
 	var ar AuthResponse
 
 	if !a.validProvider(provider) {
@@ -94,14 +99,14 @@ func (a *Authenticator) auth(provider string, u User) error {
 	}
 
 	if provider == "local" {
-		err := a.localAuth(u)
+		err := a.localAuth(c)
 		if err != nil {
 			return err
 		}
 		return nil
 	}
 
-	data, err := json.Marshal(u)
+	data, err := json.Marshal(c)
 	if err != nil {
 		return err
 	}
@@ -116,7 +121,7 @@ func (a *Authenticator) auth(provider string, u User) error {
 		return err
 	}
 
-	if !ar.Ok {
+	if !ar.OK {
 		return ErrUnauthorized
 	}
 
@@ -151,12 +156,12 @@ func (a *Authenticator) getUser(username string) (*User, error) {
 	return &u, nil
 }
 
-func (a *Authenticator) localAuth(u User) error {
-	eu, err := a.getUser(u.Username)
+func (a *Authenticator) localAuth(c Credentials) error {
+	u, err := a.getUser(c.Username)
 	if err != nil {
 		return err
 	}
-	if u.valid(eu) {
+	if u.valid(c) {
 		return nil
 	}
 	return ErrUnauthorized

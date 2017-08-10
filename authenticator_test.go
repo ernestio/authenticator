@@ -31,12 +31,12 @@ func TestAuthenticate(t *testing.T) {
 		t.Run(tt.username, func(t *testing.T) {
 			Auth := New([]string{"local", "federation"})
 			Auth.Conn = NewFakeConnector()
-			u := User{
+			c := Credentials{
 				Username: tt.username,
 				Password: tt.password,
 			}
 			conn := Auth.Conn.(*FakeConnector)
-			err := Auth.Authenticate(u)
+			err := Auth.Authenticate(c)
 			if err != tt.expected {
 				t.Errorf("Expected '%s' to be '%v', got '%s'", tt.username, tt.expected, err)
 			}

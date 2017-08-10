@@ -57,7 +57,7 @@ func userGet(data []byte) (*nats.Msg, error) {
 	}
 
 	if u.Username == "valid-local-user" {
-		return &nats.Msg{Data: []byte(`{"id": 1, "username": "valid-local-user", "password": "secret"}`)}, nil
+		return &nats.Msg{Data: []byte(`{"id": 1, "username": "valid-local-user", "password": "Jy7mfxUKTb2GtL+tFWQ6iXHh14SSMU7OhaAtZhrkaIUZPFhxi6CYryTIRAN2W7BCnfpWUxsVcLcqAEFcQXYzng==", "salt": "cU1rR2JBeWJTVExRQWhCQVhNN3p1aVNVdkluMkZ4VEtGb05FU3prZFRPUT0="}`)}, nil
 	}
 
 	if u.Username == "valid-federation-existing-user" {
