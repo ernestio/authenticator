@@ -38,11 +38,12 @@ func TestAuthenticate(t *testing.T) {
 				Password: tt.password,
 			}
 			conn := Auth.Conn.(*FakeConnector)
-			_, err := Auth.Authenticate(c)
+			token, err := Auth.Authenticate(c)
 			assert := assert.New(t)
 			assert.Equal(err, tt.expected)
 
 			if tt.expected == nil {
+				assert.NotNil(token)
 				switch tt.provider {
 				case "local":
 					assert.Equal(len(conn.Events["user.get"]), 1)
@@ -51,6 +52,7 @@ func TestAuthenticate(t *testing.T) {
 					assert.Equal(len(conn.Events["federation.auth"]), 1)
 					if !tt.exists {
 						assert.Equal(len(conn.Events["user.set"]), 1)
+						assert.Equal(string(conn.Events["user.set"][0].Data), `{"username": "valid-federation-new-user", "type": "federation"}`)
 					}
 				}
 			}

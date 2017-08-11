@@ -13,7 +13,7 @@ dev-deps: deps
 	gometalinter --install
 
 test:
-	go test -v ./...
+	go test -v ./... -cover
 
 lint:
 	gometalinter --config .linter.conf

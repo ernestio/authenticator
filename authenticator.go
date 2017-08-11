@@ -21,12 +21,12 @@ type Credentials struct {
 	Password string `json:"password"`
 }
 
-type AuthResponse struct {
+type authResponse struct {
 	OK    bool   `json:"ok"`
 	Token string `json:"token"`
 }
 
-type UserResponse struct {
+type userResponse struct {
 	Code string `json:"_code"`
 }
 
@@ -45,7 +45,7 @@ func New(providers []string, secret string) *Authenticator {
 	}
 }
 
-func (a *Authenticator) Authenticate(c Credentials) (*AuthResponse, error) {
+func (a *Authenticator) Authenticate(c Credentials) (*authResponse, error) {
 	var err error
 	var token *jwt.Token
 	var userType string
@@ -75,11 +75,11 @@ func (a *Authenticator) Authenticate(c Credentials) (*AuthResponse, error) {
 		return nil, err
 	}
 
-	return &AuthResponse{OK: true, Token: tokenString}, nil
+	return &authResponse{OK: true, Token: tokenString}, nil
 }
 
 func (a *Authenticator) createUser(c Credentials, userType string) error {
-	var ur UserResponse
+	var ur userResponse
 
 	data, err := json.Marshal(c)
 	if err != nil {
@@ -97,14 +97,7 @@ func (a *Authenticator) createUser(c Credentials, userType string) error {
 	}
 
 	if ur.Code == "404" {
-		u := &User{Username: c.Username, Type: userType}
-
-		data, err := json.Marshal(u)
-		if err != nil {
-			return err
-		}
-
-		_, err = a.Conn.Request("user.set", data, time.Second)
+		_, err = a.Conn.Request("user.set", []byte(`{"username": "`+c.Username+`", "type": "`+userType+`"}`), time.Second)
 		if err != nil {
 			return err
 		}
@@ -114,7 +107,7 @@ func (a *Authenticator) createUser(c Credentials, userType string) error {
 }
 
 func (a *Authenticator) auth(provider string, c Credentials) (*jwt.Token, error) {
-	var ar AuthResponse
+	var ar authResponse
 
 	if !a.validProvider(provider) {
 		return nil, errors.New("Unknown provider type")
