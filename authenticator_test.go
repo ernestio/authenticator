@@ -30,7 +30,7 @@ func TestAuthenticate(t *testing.T) {
 	}
 
 	for name, tt := range tests {
-		auth, conn := testsetup()
+		auth, conn := testSetup()
 
 		c := Credentials{
 			Username: tt.username,

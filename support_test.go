@@ -36,7 +36,7 @@ func (f *FakeConnector) Request(subj string, data []byte, timeout time.Duration)
 	}
 }
 
-func testsetup() (*Authenticator, *FakeConnector) {
+func testSetup() (*Authenticator, *FakeConnector) {
 	auth := New([]string{"local", "federation"}, "secret")
 	auth.Conn = NewFakeConnector()
 
