@@ -33,13 +33,14 @@ type UserResponse struct {
 type Authenticator struct {
 	Conn      Connector
 	Providers []string
-	Expiry    time.Duration
 	Secret    string
+	Expiry    time.Duration
 }
 
-func New(providers []string) *Authenticator {
+func New(providers []string, secret string) *Authenticator {
 	return &Authenticator{
 		Providers: providers,
+		Secret:    secret,
 		Expiry:    DEFAULTEXPIRY,
 	}
 }
