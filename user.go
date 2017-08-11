@@ -11,9 +11,9 @@ type User struct {
 	ID       int    `json:"id"`
 	Username string `json:"username"`
 	Password string `json:"password"`
+	Type     string `json:"type"`
 	Salt     string `json:"salt"`
 	Admin    bool   `json:"admin"`
-	//	Type     string `json:"type"`
 }
 
 const HashSize = 64

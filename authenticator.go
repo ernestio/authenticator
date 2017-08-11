@@ -64,7 +64,7 @@ func (a *Authenticator) Authenticate(c Credentials) (*AuthResponse, error) {
 
 	// create user if one doesn't exist
 	if userType != "local" {
-		err = a.createUser(userType, c)
+		err = a.createUser(c, userType)
 		if err != nil {
 			return nil, err
 		}
@@ -78,7 +78,7 @@ func (a *Authenticator) Authenticate(c Credentials) (*AuthResponse, error) {
 	return &AuthResponse{OK: true, Token: tokenString}, nil
 }
 
-func (a *Authenticator) createUser(userType string, c Credentials) error {
+func (a *Authenticator) createUser(c Credentials, userType string) error {
 	var ur UserResponse
 
 	data, err := json.Marshal(c)
@@ -97,7 +97,14 @@ func (a *Authenticator) createUser(userType string, c Credentials) error {
 	}
 
 	if ur.Code == "404" {
-		_, err := a.Conn.Request("user.set", data, time.Second)
+		u := &User{Username: c.Username, Type: userType}
+
+		data, err := json.Marshal(u)
+		if err != nil {
+			return err
+		}
+
+		_, err = a.Conn.Request("user.set", data, time.Second)
 		if err != nil {
 			return err
 		}
