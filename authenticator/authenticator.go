@@ -22,8 +22,9 @@ type Credentials struct {
 }
 
 type authResponse struct {
-	OK    bool   `json:"ok"`
-	Token string `json:"token"`
+	OK      bool   `json:"ok"`
+	Token   string `json:"token,omitempty"`
+	Message string `json:"message,omitempty"`
 }
 
 type userResponse struct {
@@ -32,12 +33,22 @@ type userResponse struct {
 
 type Authenticator struct {
 	Conn      Connector
-	Providers []string
-	Secret    string
-	Expiry    time.Duration
+	Providers Providers     `json:"providers"`
+	Secret    string        `json:"secret"`
+	Expiry    time.Duration `json:"expiry"`
 }
 
-func New(providers []string, secret string) *Authenticator {
+type Providers []Provider
+
+type Provider struct {
+	Name   string `json:"name"`
+	Config struct {
+		URL   string `json:"url"`
+		Scope string `json:"scope"`
+	}
+}
+
+func New(providers Providers, secret string) *Authenticator {
 	return &Authenticator{
 		Providers: providers,
 		Secret:    secret,
@@ -45,37 +56,37 @@ func New(providers []string, secret string) *Authenticator {
 	}
 }
 
-func (a *Authenticator) Authenticate(c Credentials) (*authResponse, error) {
+func (a *Authenticator) Authenticate(c Credentials) *authResponse {
 	var err error
 	var token *jwt.Token
 	var userType string
 
 	for _, provider := range a.Providers {
-		token, err = a.auth(provider, c)
+		token, err = a.auth(provider.Name, c)
 		if err == nil {
-			userType = provider
+			userType = provider.Name
 			break
 		}
 	}
 
 	if err != nil {
-		return nil, ErrUnauthorized
+		return &authResponse{OK: false, Message: "Authentication failed"}
 	}
 
 	// create user if one doesn't exist
 	if userType != "local" {
 		err = a.createUser(c, userType)
 		if err != nil {
-			return nil, err
+			return &authResponse{OK: false, Message: "Authentication failed"}
 		}
 	}
 
 	tokenString, err := token.SignedString([]byte(a.Secret))
 	if err != nil {
-		return nil, err
+		return &authResponse{OK: false, Message: "Authentication failed"}
 	}
 
-	return &authResponse{OK: true, Token: tokenString}, nil
+	return &authResponse{OK: true, Token: tokenString}
 }
 
 func (a *Authenticator) createUser(c Credentials, userType string) error {
@@ -145,7 +156,7 @@ func (a *Authenticator) auth(provider string, c Credentials) (*jwt.Token, error)
 
 func (a *Authenticator) validProvider(provider string) bool {
 	for _, p := range a.Providers {
-		if p == provider {
+		if p.Name == provider {
 			return true
 		}
 	}
