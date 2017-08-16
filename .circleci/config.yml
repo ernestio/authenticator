@@ -6,9 +6,9 @@ jobs:
      steps:
        - run: hostname
        - run: echo "hello - build"
-   job2:
+   test:
      docker:
        - image: circleci/golang:1.8.3
      steps:
        - run: hostname
-       - run: echo "hello - job2"
+       - run: echo "hello - test"
