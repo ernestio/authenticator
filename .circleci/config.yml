@@ -1,11 +1,11 @@
 version: 2
 jobs:
-   job1:
+   build:
      docker:
        - image: circleci/golang:1.8.3
      steps:
        - run: hostname
-       - run: echo "hello - job1"
+       - run: echo "hello - build"
    job2:
      docker:
        - image: circleci/golang:1.8.3
