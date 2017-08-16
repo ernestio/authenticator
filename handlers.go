@@ -7,7 +7,7 @@ import (
 	"github.com/nats-io/nats"
 )
 
-func handler(msg *nats.Msg) {
+func authenticationGetHandler(msg *nats.Msg) {
 	var c authenticator.Credentials
 
 	err := json.Unmarshal(msg.Data, &c)

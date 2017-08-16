@@ -39,7 +39,7 @@ func main() {
 		log.Println(err)
 	}
 
-	_, err = nc.Subscribe("authentication.get", handler)
+	_, err = nc.Subscribe("authentication.get", authenticationGetHandler)
 	if err != nil {
 		log.Println("Unable to subscribe to NATS 'authentication.get'")
 	}
