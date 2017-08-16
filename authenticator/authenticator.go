@@ -12,8 +12,6 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 )
 
-const DEFAULTEXPIRY = time.Hour * 24
-
 var ErrUnauthorized = errors.New("Authentication failed")
 
 type Credentials struct {
@@ -48,15 +46,7 @@ type Provider struct {
 	}
 }
 
-func New(providers Providers, secret string) *Authenticator {
-	return &Authenticator{
-		Providers: providers,
-		Secret:    secret,
-		Expiry:    DEFAULTEXPIRY,
-	}
-}
-
-func (a *Authenticator) Authenticate(c Credentials) *authResponse {
+func (a *Authenticator) Authenticate(c Credentials) (*authResponse, error) {
 	var err error
 	var token *jwt.Token
 	var userType string
@@ -70,23 +60,22 @@ func (a *Authenticator) Authenticate(c Credentials) *authResponse {
 	}
 
 	if err != nil {
-		return &authResponse{OK: false, Message: "Authentication failed"}
+		return nil, err
 	}
 
 	// create user if one doesn't exist
 	if userType != "local" {
 		err = a.createUser(c, userType)
 		if err != nil {
-			return &authResponse{OK: false, Message: "Authentication failed"}
+			return nil, err
 		}
 	}
-
 	tokenString, err := token.SignedString([]byte(a.Secret))
 	if err != nil {
-		return &authResponse{OK: false, Message: "Authentication failed"}
+		return nil, err
 	}
 
-	return &authResponse{OK: true, Token: tokenString}
+	return &authResponse{OK: true, Token: tokenString}, nil
 }
 
 func (a *Authenticator) createUser(c Credentials, userType string) error {
@@ -193,6 +182,7 @@ func (a *Authenticator) localAuth(c Credentials) (*jwt.Token, error) {
 	}
 
 	token := generateToken(a.Expiry, u.Username)
+	token.Claims.(jwt.MapClaims)["group_id"] = u.GroupID
 	token.Claims.(jwt.MapClaims)["admin"] = u.Admin
 
 	return token, nil

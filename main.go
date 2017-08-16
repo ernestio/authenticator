@@ -4,21 +4,22 @@ import (
 	"log"
 	"os"
 	"runtime"
+	"time"
 
 	"github.com/ernestio/authenticator/authenticator"
-	"github.com/ernestio/ernest-config-client"
+	ecc "github.com/ernestio/ernest-config-client"
 	"github.com/nats-io/nats"
 )
 
 var (
 	nc   *nats.Conn
-	ec   *ernest_config_client.Config
+	ec   *ecc.Config
 	auth *authenticator.Authenticator
 )
 
 func main() {
 	// NATS
-	ec = ernest_config_client.NewConfig(os.Getenv("NATS_URI"))
+	ec = ecc.NewConfig(os.Getenv("NATS_URI"))
 	nc = ec.Nats()
 
 	// JWT
@@ -28,7 +29,11 @@ func main() {
 	}
 
 	// Authenticator
-	auth = &authenticator.Authenticator{Conn: nc}
+	auth = &authenticator.Authenticator{
+		Conn:   nc,
+		Secret: secret,
+		Expiry: 24 * time.Hour,
+	}
 	err := ec.GetConfig("authenticator", &auth)
 	if err != nil {
 		log.Println(err)

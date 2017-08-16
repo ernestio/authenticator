@@ -37,10 +37,13 @@ func (f *FakeConnector) Request(subj string, data []byte, timeout time.Duration)
 }
 
 func testSetup() (*Authenticator, *FakeConnector) {
-	auth := New([]string{"local", "federation"}, "secret")
-	auth.Conn = NewFakeConnector()
+	auth := Authenticator{
+		Conn:      NewFakeConnector(),
+		Secret:    "secret",
+		Providers: Providers{Provider{Name: "local"}, Provider{Name: "federation"}},
+	}
 
-	return auth, auth.Conn.(*FakeConnector)
+	return &auth, auth.Conn.(*FakeConnector)
 }
 
 func federationAuth(data []byte) (*nats.Msg, error) {

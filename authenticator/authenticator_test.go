@@ -11,7 +11,6 @@ import (
 )
 
 func TestAuthenticate(t *testing.T) {
-
 	tests := map[string]struct {
 		username string
 		password string
@@ -39,25 +38,27 @@ func TestAuthenticate(t *testing.T) {
 
 		t.Run(name, func(t *testing.T) {
 			token, err := auth.Authenticate(c)
-			assert.Equal(t, err, tt.expected)
+			assert := assert.New(t)
+
+			assert.Equal(err, tt.expected)
 
 			if tt.expected != nil {
 				return
 			}
 
-			assert.NotNil(t, token)
+			assert.NotNil(token)
 
 			if tt.provider == "local" {
-				assert.Equal(t, len(conn.Events["user.get"]), 1)
+				assert.Equal(len(conn.Events["user.get"]), 1)
 				return
 			}
 
-			assert.Equal(t, len(conn.Events["user.get"]), 2)
-			assert.Equal(t, len(conn.Events["federation.auth"]), 1)
+			assert.Equal(len(conn.Events["user.get"]), 2)
+			assert.Equal(len(conn.Events["federation.auth"]), 1)
 
 			if !tt.exists {
-				assert.Equal(t, len(conn.Events["user.set"]), 1)
-				assert.Equal(t, string(conn.Events["user.set"][0].Data), `{"username": "valid-federation-new-user", "type": "federation"}`)
+				assert.Equal(len(conn.Events["user.set"]), 1)
+				assert.Equal(string(conn.Events["user.set"][0].Data), `{"username": "valid-federation-new-user", "type": "federation"}`)
 			}
 		})
 	}

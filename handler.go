@@ -12,14 +12,20 @@ func handler(msg *nats.Msg) {
 
 	err := json.Unmarshal(msg.Data, &c)
 	if err != nil {
-		nc.Publish(msg.Reply, []byte(`failed to decode NATS message`))
+		nc.Publish(msg.Reply, []byte(`{"ok": false, "message": "`+err.Error()+`"}`))
+		return
 	}
 
-	token := auth.Authenticate(c)
-
-	t, err := json.Marshal(token)
+	res, err := auth.Authenticate(c)
 	if err != nil {
-		nc.Publish(msg.Reply, []byte(`failed to encode token response`))
+		nc.Publish(msg.Reply, []byte(`{"ok": false, "message": "`+err.Error()+`"}`))
+		return
+	}
+
+	t, err := json.Marshal(res)
+	if err != nil {
+		nc.Publish(msg.Reply, []byte(`{"ok": false, "message": "`+err.Error()+`"}`))
+		return
 	}
 
 	nc.Publish(msg.Reply, []byte(t))
