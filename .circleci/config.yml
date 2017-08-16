@@ -1,9 +1,14 @@
 version: 2
 jobs:
-   build:
+   job1:
      docker:
        - image: circleci/golang:1.8.3
-     working_directory: /go/src/github.com/ernestio/authenticator
      steps:
-       - checkout
-       - run: go test -v -cover ./...
+       - run: hostname
+       - run: echo "hello - job1"
+   job2:
+     docker:
+       - image: circleci/golang:1.8.3
+     steps:
+       - run: hostname
+       - run: echo "hello - job2"
