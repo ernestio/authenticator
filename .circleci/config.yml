@@ -5,5 +5,7 @@ jobs:
        - image: circleci/golang:1.8.3
      steps:
        - checkout
+       - run: go get -u github.com/golang/dep/cmd/dep
        - run: pwd
+       - run: ls -lah
        - run: dep ensure
