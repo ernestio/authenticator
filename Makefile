@@ -1,20 +1,16 @@
-install:
-	go install -v
+pkgs = $(shell go list ./... | grep -v /vendor/)
 
-build:
-	go build -v ./...
+#install:
+#	go install -v
+
+#build:
+#	go build -v ./...
 
 deps:
-	go get github.com/nats-io/nats
-
-dev-deps: deps
-	go get github.com/stretchr/testify/suite
-	go get github.com/alecthomas/gometalinter
-	gometalinter --install
+	dep ensure
 
 test:
-	go test -v ./... -cover
+	go test -v -cover $(pkgs)
 
-lint:
-	gometalinter --config .linter.conf
-
+#lint:
+#	gometalinter --config .linter.conf
