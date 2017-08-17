@@ -16,6 +16,7 @@ go get github.com/ernestio/authenticator
 package main
 
 import (
+	"github.com/ernestio/authenticator"
 )
 
 func main() {
