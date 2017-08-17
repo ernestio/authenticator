@@ -60,7 +60,7 @@ func (a *Authenticator) Authenticate(c Credentials) (*authResponse, error) {
 	}
 
 	if err != nil {
-		return nil, err
+		return nil, errors.New("Authentication failed")
 	}
 
 	// create user if one doesn't exist
