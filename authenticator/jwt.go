@@ -10,7 +10,13 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 )
 
-func generateToken(exp time.Duration, username string) *jwt.Token {
+func generateToken(username string, exp time.Duration) *jwt.Token {
+	if exp == 0 {
+		exp = time.Hour * 24
+	} else {
+		exp = time.Hour * exp
+	}
+
 	token := jwt.New(jwt.SigningMethodHS256)
 
 	claims := token.Claims.(jwt.MapClaims)

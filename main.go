@@ -4,7 +4,6 @@ import (
 	"log"
 	"os"
 	"runtime"
-	"time"
 
 	"github.com/ernestio/authenticator/authenticator"
 	ecc "github.com/ernestio/ernest-config-client"
@@ -32,7 +31,6 @@ func main() {
 	auth = &authenticator.Authenticator{
 		Conn:   nc,
 		Secret: secret,
-		Expiry: 24 * time.Hour,
 	}
 	err := ec.GetConfig("authenticator", &auth)
 	if err != nil {

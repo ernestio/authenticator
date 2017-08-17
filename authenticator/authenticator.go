@@ -70,6 +70,7 @@ func (a *Authenticator) Authenticate(c Credentials) (*authResponse, error) {
 			return nil, err
 		}
 	}
+
 	tokenString, err := token.SignedString([]byte(a.Secret))
 	if err != nil {
 		return nil, err
@@ -137,7 +138,7 @@ func (a *Authenticator) auth(provider string, c Credentials) (*jwt.Token, error)
 	}
 
 	if ar.OK {
-		return generateToken(a.Expiry, c.Username), nil
+		return generateToken(c.Username, a.Expiry), nil
 	}
 
 	return nil, ErrUnauthorized
@@ -181,7 +182,7 @@ func (a *Authenticator) localAuth(c Credentials) (*jwt.Token, error) {
 		return nil, ErrUnauthorized
 	}
 
-	token := generateToken(a.Expiry, u.Username)
+	token := generateToken(u.Username, a.Expiry)
 	token.Claims.(jwt.MapClaims)["group_id"] = u.GroupID
 	token.Claims.(jwt.MapClaims)["admin"] = u.Admin
 
