@@ -9,12 +9,16 @@ package authenticator
 import (
 	"encoding/json"
 	"errors"
+	"log"
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
 )
 
-var ErrUnauthorized = errors.New("Authentication failed")
+var (
+	ErrUnauthorized    = errors.New("Authentication failed")
+	supportedProviders = []string{"local", "federation"}
+)
 
 // Credentials describes user credentials input
 type Credentials struct {
@@ -72,7 +76,7 @@ func (a *Authenticator) Authenticate(c Credentials) (*authResponse, error) {
 		return nil, errors.New("Authentication failed")
 	}
 
-	// create user if one doesn't exist
+	// create local user for remote authentication if one doesn't exist
 	if userType != "local" {
 		err = a.createUser(c, userType)
 		if err != nil {
@@ -88,43 +92,13 @@ func (a *Authenticator) Authenticate(c Credentials) (*authResponse, error) {
 	return &authResponse{OK: true, Token: tokenString}, nil
 }
 
-// createUser checks if a user account for the authenticated user already
-// exists and if not creates one. Upon creation the authentication provider
-// for that user is also set.
-func (a *Authenticator) createUser(c Credentials, userType string) error {
-	var ur userResponse
-
-	data, err := json.Marshal(c)
-	if err != nil {
-		return err
-	}
-
-	resp, err := a.Conn.Request("user.get", data, time.Second)
-	if err != nil {
-		return err
-	}
-
-	json.Unmarshal(resp.Data, &ur)
-	if err != nil {
-		return err
-	}
-
-	if ur.Code == "404" {
-		_, err = a.Conn.Request("user.set", []byte(`{"username": "`+c.Username+`", "type": "`+userType+`"}`), time.Second)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
 // auth validates user credentials against the specified provider
 func (a *Authenticator) auth(provider string, c Credentials) (*jwt.Token, error) {
 	var ar authResponse
 
 	if !a.validProvider(provider) {
-		return nil, errors.New("Unknown provider type")
+		log.Println("unknown provider type")
+		return nil, errors.New("unknown provider type")
 	}
 
 	if provider == "local" {
@@ -157,14 +131,45 @@ func (a *Authenticator) auth(provider string, c Credentials) (*jwt.Token, error)
 	return nil, ErrUnauthorized
 }
 
-// validProvider ???
+// validProvider checks the authentication provider type is supported
 func (a *Authenticator) validProvider(provider string) bool {
-	for _, p := range a.Providers {
-		if p.Name == provider {
+	for _, p := range supportedProviders {
+		if p == provider {
 			return true
 		}
 	}
 	return false
+}
+
+// createUser checks if a user account for the authenticated user already
+// exists and if not creates one. Upon creation the authentication provider
+// for that user is also set.
+func (a *Authenticator) createUser(c Credentials, userType string) error {
+	var ur userResponse
+
+	data, err := json.Marshal(c)
+	if err != nil {
+		return err
+	}
+
+	resp, err := a.Conn.Request("user.get", data, time.Second)
+	if err != nil {
+		return err
+	}
+
+	json.Unmarshal(resp.Data, &ur)
+	if err != nil {
+		return err
+	}
+
+	if ur.Code == "404" {
+		_, err = a.Conn.Request("user.set", []byte(`{"username": "`+c.Username+`", "type": "`+userType+`"}`), time.Second)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // getUser fetches the specified user from user-store
