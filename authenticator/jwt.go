@@ -10,6 +10,7 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 )
 
+// generateToken generates a JWT token
 func generateToken(username string, exp time.Duration) *jwt.Token {
 	if exp == 0 {
 		exp = time.Hour * 24

@@ -11,6 +11,7 @@ import (
 	"golang.org/x/crypto/scrypt"
 )
 
+// User describes a user and their attributes
 type User struct {
 	ID       int    `json:"id"`
 	Username string `json:"username"`
@@ -21,32 +22,34 @@ type User struct {
 	Admin    bool   `json:"admin"`
 }
 
+// HashSize controls the size of the hash for the user password
 const HashSize = 64
 
-func (u *User) valid(c Credentials) bool {
+// valid validates a users credentials
+func (u *User) valid(c Credentials) (bool, error) {
 	if c.Username == u.Username {
 		pw, err := base64.StdEncoding.DecodeString(u.Password)
 		if err != nil {
-			return false
+			return false, err
 		}
 
 		salt, err := base64.StdEncoding.DecodeString(u.Salt)
 		if err != nil {
-			return false
+			return false, err
 		}
 
 		hash, err := scrypt.Key([]byte(c.Password), salt, 16384, 8, 1, HashSize)
 		if err != nil {
-			return false
+			return false, err
 		}
 
 		// Compare in constant time to mitigate timing attacks
 		if subtle.ConstantTimeCompare(pw, hash) == 1 {
-			return true
+			return true, nil
 		}
 
-		return false
+		return false, nil
 	}
 
-	return false
+	return false, nil
 }

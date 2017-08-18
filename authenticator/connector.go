@@ -10,6 +10,8 @@ import (
 	"github.com/nats-io/nats"
 )
 
+// Connector provides an interface to NATS. This allows the service to be
+// mocked so an actual NATS instance isn't required for unit testing.
 type Connector interface {
 	Request(subj string, data []byte, timeout time.Duration) (*nats.Msg, error)
 }

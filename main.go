@@ -1,7 +1,10 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 package main
 
 import (
-	"log"
 	"os"
 	"runtime"
 
@@ -24,7 +27,7 @@ func main() {
 	// JWT
 	secret := os.Getenv("JWT_SECRET")
 	if secret == "" {
-		log.Println("Unable to set JWT secret")
+		panic("Unable to set JWT secret")
 	}
 
 	// Authenticator
@@ -34,12 +37,12 @@ func main() {
 	}
 	err := ec.GetConfig("authenticator", &auth)
 	if err != nil {
-		log.Println(err)
+		panic(err)
 	}
 
 	_, err = nc.Subscribe("authentication.get", authenticationGetHandler)
 	if err != nil {
-		log.Println("Unable to subscribe to NATS 'authentication.get'")
+		panic(err)
 	}
 
 	runtime.Goexit()
