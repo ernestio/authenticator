@@ -7,7 +7,7 @@ package main
 import (
 	"encoding/json"
 
-	"github.com/ernestio/authenticator/authenticator"
+	"github.com/ernestio/authenticator"
 	"github.com/nats-io/nats"
 )
 
