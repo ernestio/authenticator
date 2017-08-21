@@ -7,4 +7,4 @@ WORKDIR /go/src/github.com/${GITHUB_ORG:-ernestio}/authenticator
 
 RUN make deps && cd cmd/authenticator && go install
 
-ENTRYPOINT ./authenticator
+ENTRYPOINT /go/bin/authenticator
