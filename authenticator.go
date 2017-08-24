@@ -51,7 +51,7 @@ type Providers []Provider
 
 // Provider describes an authentication provider
 type Provider struct {
-	Name   string `json:"name"`
+	Type   string `json:"type"`
 	Config struct {
 		URL   string `json:"url"`
 		Scope string `json:"scope"`
@@ -65,9 +65,9 @@ func (a *Authenticator) Authenticate(c Credentials) (*authResponse, error) {
 	var userType string
 
 	for _, provider := range a.Providers {
-		token, err = a.auth(provider.Name, c)
+		token, err = a.auth(provider, c)
 		if err == nil {
-			userType = provider.Name
+			userType = provider.Type
 			break
 		}
 	}
@@ -93,15 +93,15 @@ func (a *Authenticator) Authenticate(c Credentials) (*authResponse, error) {
 }
 
 // auth validates user credentials against the specified provider
-func (a *Authenticator) auth(provider string, c Credentials) (*jwt.Token, error) {
+func (a *Authenticator) auth(p Provider, c Credentials) (*jwt.Token, error) {
 	var ar authResponse
 
-	if !a.validProvider(provider) {
+	if !a.validProvider(p.Type) {
 		log.Println("unknown provider type")
 		return nil, errors.New("unknown provider type")
 	}
 
-	if provider == "local" {
+	if p.Type == "local" {
 		token, err := a.localAuth(c)
 		if err != nil {
 			return nil, err
@@ -114,7 +114,7 @@ func (a *Authenticator) auth(provider string, c Credentials) (*jwt.Token, error)
 		return nil, err
 	}
 
-	resp, err := a.Conn.Request(provider+".auth", data, time.Second)
+	resp, err := a.Conn.Request(p.Type+".auth", data, time.Second)
 	if err != nil {
 		return nil, err
 	}
