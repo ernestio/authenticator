@@ -8,7 +8,7 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/ernestio/authenticator"
+	"github.com/ernestio/authenticator/pkg/authenticator"
 	ecc "github.com/ernestio/ernest-config-client"
 	"github.com/nats-io/nats"
 )

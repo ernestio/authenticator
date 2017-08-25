@@ -40,7 +40,7 @@ func testSetup() (*Authenticator, *FakeConnector) {
 	auth := Authenticator{
 		Conn:      NewFakeConnector(),
 		Secret:    "secret",
-		Providers: Providers{Provider{Name: "local"}, Provider{Name: "federation"}},
+		Providers: Providers{Provider{Type: "local"}, Provider{Type: "federation"}},
 	}
 
 	return &auth, auth.Conn.(*FakeConnector)
