@@ -12,13 +12,48 @@ go get github.com/ernestio/authenticator
 
 ## Example
 
-```go
-package main
+### Configuration
 
-import (
-	"github.com/ernestio/authenticator"
-)
+```
+# config.json
+{
+  "authenticator": {
+    "providers": [
+      {
+			  "type": "local"
+			},
+      {
+			  "type": "federation",
+				"config": {
+				  "url": "https://federation.example.com",
+					"scope": "https://ernest.example.com"
+				}
+			}
+    ]
+  }
+}
+```
 
-func main() {
+### Request
+
+```
+nats.Request("authentication.get", []byte(`{"username": "john", "password": "secret"}`), time.Second)
+```
+
+### Response
+
+Successful
+```
+{
+  "ok": true,
+	"token": "xxxx"
+}
+```
+
+Unsuccessful
+```
+{
+  "ok": false,
+	"message": "Authentication failed"
 }
 ```
