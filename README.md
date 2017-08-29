@@ -12,10 +12,9 @@ go get github.com/ernestio/authenticator
 
 ## Example
 
-### Configuration
+### Configuration (config.json)
 
 ```
-# config.json
 {
   "authenticator": {
     "providers": [
