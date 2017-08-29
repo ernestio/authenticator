@@ -20,15 +20,15 @@ go get github.com/ernestio/authenticator
   "authenticator": {
     "providers": [
       {
-			  "type": "local"
-			},
+        "type": "local"
+      },
       {
-			  "type": "federation",
-				"config": {
-				  "url": "https://federation.example.com",
-					"scope": "https://ernest.example.com"
-				}
-			}
+        "type": "federation",
+        "config": {
+          "url": "https://federation.example.com",
+          "scope": "https://ernest.example.com"
+        }
+      }
     ]
   }
 }
@@ -46,7 +46,7 @@ Successful
 ```
 {
   "ok": true,
-	"token": "xxxx"
+  "token": "xxxx"
 }
 ```
 
@@ -54,6 +54,6 @@ Unsuccessful
 ```
 {
   "ok": false,
-	"message": "Authentication failed"
+  "message": "Authentication failed"
 }
 ```
