@@ -53,8 +53,9 @@ type Providers []Provider
 type Provider struct {
 	Type   string `json:"type"`
 	Config struct {
-		URL   string `json:"url"`
-		Scope string `json:"scope"`
+		URL    string `json:"url,omitemtpy"`
+		Scope  string `json:"scope,omitempty"`
+		Domain string `json:"domain,omitempty"`
 	}
 }
 
@@ -209,7 +210,6 @@ func (a *Authenticator) localAuth(c Credentials) (*jwt.Token, error) {
 	}
 
 	token := generateToken(u.Username, a.Expiry)
-	token.Claims.(jwt.MapClaims)["group_id"] = u.GroupID
 	token.Claims.(jwt.MapClaims)["admin"] = u.Admin
 
 	return token, nil
