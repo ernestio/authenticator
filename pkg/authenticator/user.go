@@ -16,7 +16,6 @@ type User struct {
 	ID       int    `json:"id"`
 	Username string `json:"username"`
 	Password string `json:"password"`
-	GroupID  int    `json:"group_id"`
 	Type     string `json:"type"`
 	Salt     string `json:"salt"`
 	Admin    bool   `json:"admin"`

@@ -23,6 +23,7 @@ func generateToken(username string, exp time.Duration) *jwt.Token {
 	claims := token.Claims.(jwt.MapClaims)
 	claims["username"] = username
 	claims["exp"] = time.Now().Add(exp).Unix()
+	claims["admin"] = false
 
 	return token
 }
