@@ -1,6 +1,7 @@
 # Authenticator
 
-[![CircleCI](https://circleci.com/gh/ernestio/authenticator.svg?style=shield)](https://circleci.com/gh/ernestio/authenticator)
+master:  [![CircleCI](https://circleci.com/gh/ernestio/authenticator/tree/master.svg?style=shield)](https://circleci.com/gh/ernestio/authenticator/tree/master)  
+develop: [![CircleCI](https://circleci.com/gh/ernestio/authenticator/tree/develop.svg?style=shield)](https://circleci.com/gh/ernestio/authenticator/tree/develop)
 
 Authenticator provides authentication services for the Ernest application.
 
