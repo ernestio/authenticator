@@ -9,6 +9,7 @@ package authenticator
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"time"
 
@@ -29,6 +30,7 @@ type Credentials struct {
 // authResponse describes the response for an 'authentication.get' request
 type authResponse struct {
 	OK      bool   `json:"ok"`
+	Admin   bool   `json:"admin"`
 	Token   string `json:"token,omitempty"`
 	Message string `json:"message,omitempty"`
 }
@@ -79,7 +81,9 @@ func (a *Authenticator) Authenticate(c Credentials) (*authResponse, error) {
 
 	// create local user for remote authentication if one doesn't exist
 	if userType != "local" {
-		err = a.createUser(c, userType)
+		claims := token.Claims.(jwt.MapClaims)
+
+		err = a.createUser(c, userType, claims["admin"].(bool))
 		if err != nil {
 			return nil, err
 		}
@@ -126,7 +130,13 @@ func (a *Authenticator) auth(p Provider, c Credentials) (*jwt.Token, error) {
 	}
 
 	if ar.OK {
-		return generateToken(c.Username, a.Expiry), nil
+		token := generateToken(c.Username, a.Expiry)
+		if ar.Admin {
+			token.Claims.(jwt.MapClaims)["admin"] = true
+		} else {
+			token.Claims.(jwt.MapClaims)["admin"] = false
+		}
+		return token, nil
 	}
 
 	return nil, ErrUnauthorized
@@ -145,7 +155,7 @@ func (a *Authenticator) validProvider(provider string) bool {
 // createUser checks if a user account for the authenticated user already
 // exists and if not creates one. Upon creation the authentication provider
 // for that user is also set.
-func (a *Authenticator) createUser(c Credentials, userType string) error {
+func (a *Authenticator) createUser(c Credentials, userType string, admin bool) error {
 	var ur userResponse
 
 	data, err := json.Marshal(c)
@@ -163,11 +173,10 @@ func (a *Authenticator) createUser(c Credentials, userType string) error {
 		return err
 	}
 
-	if ur.Code == "404" {
-		_, err = a.Conn.Request("user.set", []byte(`{"username": "`+c.Username+`", "type": "`+userType+`"}`), time.Second)
-		if err != nil {
-			return err
-		}
+	msg := fmt.Sprintf(`{"username": "%s", "type": "%s", "admin": %t}`, c.Username, userType, admin)
+	_, err = a.Conn.Request("user.set", []byte(msg), time.Second)
+	if err != nil {
+		return err
 	}
 
 	return nil
