@@ -54,12 +54,18 @@ func federationAuth(data []byte) (*nats.Msg, error) {
 		return &nats.Msg{Data: []byte(`{"ok": false, "message": "Could not load credentials"}`)}, nil
 	}
 
-	if u.Username == "valid-federation-new-user" && u.Password == "secret" ||
-		u.Username == "valid-federation-existing-user" && u.Password == "secret" {
-		return &nats.Msg{Data: []byte(`{"ok": true}`)}, nil
+	switch {
+	case u.Username == "valid-federation-new-user" && u.Password == "secret":
+		return &nats.Msg{Data: []byte(`{"ok": true, "admin": false}`)}, nil
+	case u.Username == "valid-federation-new-admin-user" && u.Password == "secret":
+		return &nats.Msg{Data: []byte(`{"ok": true, "admin": true}`)}, nil
+	case u.Username == "valid-federation-existing-user" && u.Password == "secret":
+		return &nats.Msg{Data: []byte(`{"ok": true, "admin": false}`)}, nil
+	case u.Username == "valid-federation-existing-admin-user" && u.Password == "secret":
+		return &nats.Msg{Data: []byte(`{"ok": true, "admin": true}`)}, nil
+	default:
+		return &nats.Msg{Data: []byte(`{"ok": false, "message": "Authentication Failed"}`)}, nil
 	}
-
-	return &nats.Msg{Data: []byte(`{"ok": false, "message": "Authentication Failed"}`)}, nil
 }
 
 func userGet(data []byte) (*nats.Msg, error) {
