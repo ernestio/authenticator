@@ -14,18 +14,21 @@ func TestAuthenticate(t *testing.T) {
 	tests := map[string]struct {
 		username string
 		password string
+		admin    bool
 		provider string
 		exists   bool
 		expected error
 	}{
-		"valid local user":                            {"valid-local-user", "secret", "local", true, nil},
-		"valid-local-user-bad-password":               {"valid-local-user-bad-password", "wrong", "local", true, ErrUnauthorized},
-		"invalid-local-user":                          {"invalid-local-user", "secret", "local", false, ErrUnauthorized},
-		"valid-federation-new-user":                   {"valid-federation-new-user", "secret", "federation", false, nil},
-		"valid-federation-new-user-bad-password":      {"valid-federation-new-user-bad-password", "wrong", "federation", false, ErrUnauthorized},
-		"valid-federation-existing-user":              {"valid-federation-existing-user", "secret", "federation", true, nil},
-		"valid-federation-existing-user-bad-password": {"valid-federation-existing-user-bad-password", "wrong", "federation", true, ErrUnauthorized},
-		"invalid-federation-user":                     {"invalid-federation-user", "secret", "federation", false, ErrUnauthorized},
+		"valid local user":                            {"valid-local-user", "secret", false, "local", true, nil},
+		"valid-local-user-bad-password":               {"valid-local-user-bad-password", "wrong", false, "local", true, ErrUnauthorized},
+		"invalid-local-user":                          {"invalid-local-user", "secret", false, "local", false, ErrUnauthorized},
+		"valid-federation-new-user":                   {"valid-federation-new-user", "secret", false, "federation", false, nil},
+		"valid-federation-new-user-bad-password":      {"valid-federation-new-user-bad-password", "wrong", false, "federation", false, ErrUnauthorized},
+		"valid-federation-new-admin-user":             {"valid-federation-new-admin-user", "secret", true, "federation", false, nil},
+		"valid-federation-existing-user":              {"valid-federation-existing-user", "secret", false, "federation", true, nil},
+		"valid-federation-existing-user-bad-password": {"valid-federation-existing-user-bad-password", "wrong", false, "federation", true, ErrUnauthorized},
+		"valid-federation-existing-admin-user":        {"valid-federation-existing-admin-user", "secret", true, "federation", true, nil},
+		"invalid-federation-user":                     {"invalid-federation-user", "secret", false, "federation", false, ErrUnauthorized},
 	}
 
 	for name, tt := range tests {
@@ -56,9 +59,21 @@ func TestAuthenticate(t *testing.T) {
 			assert.Equal(len(conn.Events["user.get"]), 2)
 			assert.Equal(len(conn.Events["federation.auth"]), 1)
 
-			if !tt.exists {
+			if tt.provider == "federation" {
 				assert.Equal(len(conn.Events["user.set"]), 1)
-				assert.Equal(string(conn.Events["user.set"][0].Data), `{"username": "valid-federation-new-user", "type": "federation"}`)
+				if tt.exists {
+					if tt.admin {
+						assert.Equal(string(conn.Events["user.set"][0].Data), `{"username": "valid-federation-existing-admin-user", "type": "federation", "admin": true}`)
+					} else {
+						assert.Equal(string(conn.Events["user.set"][0].Data), `{"username": "valid-federation-existing-user", "type": "federation", "admin": false}`)
+					}
+				} else {
+					if tt.admin {
+						assert.Equal(string(conn.Events["user.set"][0].Data), `{"username": "valid-federation-new-admin-user", "type": "federation", "admin": true}`)
+					} else {
+						assert.Equal(string(conn.Events["user.set"][0].Data), `{"username": "valid-federation-new-user", "type": "federation", "admin": false}`)
+					}
+				}
 			}
 		})
 	}
