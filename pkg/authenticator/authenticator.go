@@ -86,7 +86,7 @@ func (a *Authenticator) Authenticate(c Credentials) (*authResponse, error) {
 	}
 
 	if c.VerificationCode != "" {
-		err := a.VerifyMFA(c)
+		err := a.verifyMFA(c)
 		if err != nil {
 			return nil, err
 		}
@@ -237,7 +237,8 @@ func (a *Authenticator) localAuth(c Credentials) (*jwt.Token, error) {
 	return token, nil
 }
 
-func (a *Authenticator) VerifyMFA(c Credentials) error {
+// verifyMFA checks if a verification code is valid
+func (a *Authenticator) verifyMFA(c Credentials) error {
 	resp, err := a.Conn.Request("mfa.auth", []byte(`{"username": "`+c.Username+`", "verification_code": "`+c.VerificationCode+`"}`), time.Second)
 	if err != nil {
 		return err
