@@ -5,6 +5,7 @@
 package authenticator
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -74,6 +75,37 @@ func TestAuthenticate(t *testing.T) {
 						assert.Equal(string(conn.Events["user.set"][0].Data), `{"username": "valid-federation-new-user", "type": "federation", "admin": false}`)
 					}
 				}
+			}
+		})
+	}
+}
+
+func TestVerifyMFA(t *testing.T) {
+	tests := map[string]struct {
+		username         string
+		verificationCode string
+		expected         error
+	}{
+		"valid MFA verfication":    {"john", "secret", nil},
+		"invalid MFA verification": {"jane", "wrong", errors.New("verification failed")},
+	}
+
+	for name, tt := range tests {
+		auth, _ := testSetup()
+
+		c := Credentials{
+			Username:         tt.username,
+			VerificationCode: tt.verificationCode,
+		}
+
+		t.Run(name, func(t *testing.T) {
+			err := auth.verifyMFA(c)
+			assert := assert.New(t)
+
+			assert.Equal(err, tt.expected)
+
+			if tt.expected != nil {
+				return
 			}
 		})
 	}
