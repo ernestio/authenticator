@@ -26,7 +26,8 @@ go get github.com/ernestio/authenticator
         "type": "federation",
         "config": {
           "url": "https://federation.example.com",
-          "scope": "https://ernest.example.com"
+          "scope": "https://ernest.example.com",
+          "domain": "CORP"
         }
       }
     ]
