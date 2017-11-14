@@ -23,8 +23,9 @@ var (
 
 // Credentials describes user credentials input
 type Credentials struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Username         string `json:"username"`
+	Password         string `json:"password"`
+	VerificationCode string `json:"verification_code"`
 }
 
 // authResponse describes the response for an 'authentication.get' request
@@ -32,6 +33,11 @@ type authResponse struct {
 	OK      bool   `json:"ok"`
 	Admin   bool   `json:"admin"`
 	Token   string `json:"token,omitempty"`
+	Message string `json:"message,omitempty"`
+}
+
+type mfaResponse struct {
+	OK      bool   `json:"ok"`
 	Message string `json:"message,omitempty"`
 }
 
@@ -77,6 +83,13 @@ func (a *Authenticator) Authenticate(c Credentials) (*authResponse, error) {
 
 	if err != nil {
 		return nil, errors.New("Authentication failed")
+	}
+
+	if c.VerificationCode != "" {
+		err := a.verifyMFA(c)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// create local user for remote authentication if one doesn't exist
@@ -222,4 +235,24 @@ func (a *Authenticator) localAuth(c Credentials) (*jwt.Token, error) {
 	token.Claims.(jwt.MapClaims)["admin"] = u.Admin
 
 	return token, nil
+}
+
+// verifyMFA checks if a verification code is valid
+func (a *Authenticator) verifyMFA(c Credentials) error {
+	resp, err := a.Conn.Request("mfa.auth", []byte(`{"username": "`+c.Username+`", "verification_code": "`+c.VerificationCode+`"}`), time.Second)
+	if err != nil {
+		return err
+	}
+
+	var result mfaResponse
+	err = json.Unmarshal(resp.Data, &result)
+	if err != nil {
+		return err
+	}
+
+	if !result.OK {
+		return errors.New("verification failed")
+	}
+
+	return nil
 }

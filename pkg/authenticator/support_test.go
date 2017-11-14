@@ -31,6 +31,8 @@ func (f *FakeConnector) Request(subj string, data []byte, timeout time.Duration)
 		return userGet(data)
 	case "user.set":
 		return userSet(data)
+	case "mfa.auth":
+		return mfaAuth(data)
 	default:
 		return &nats.Msg{Data: []byte(`{"ok": false, "message": "Unknown subject type"}`)}, nil
 	}
@@ -96,4 +98,19 @@ func userSet(data []byte) (*nats.Msg, error) {
 	}
 
 	return &nats.Msg{Data: []byte(`{"username": "` + u.Username + `"}`)}, nil
+}
+
+func mfaAuth(data []byte) (*nats.Msg, error) {
+	var c Credentials
+
+	err := json.Unmarshal(data, &c)
+	if err != nil {
+		return nil, err
+	}
+
+	if c.Username == "john" && c.VerificationCode == "secret" {
+		return &nats.Msg{Data: []byte(`{"ok": true}`)}, nil
+	}
+
+	return &nats.Msg{Data: []byte(`{"ok": false, "message": "verification failed"}`)}, nil
 }
