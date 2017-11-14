@@ -82,7 +82,7 @@ func (a *Authenticator) Authenticate(c Credentials) (*authResponse, error) {
 	}
 
 	if err != nil {
-		return nil, errors.New("Authentication failed")
+		return nil, ErrUnauthorized
 	}
 
 	if c.VerificationCode != "" {
@@ -251,7 +251,7 @@ func (a *Authenticator) verifyMFA(c Credentials) error {
 	}
 
 	if !result.OK {
-		return errors.New("verification failed")
+		return ErrUnauthorized
 	}
 
 	return nil

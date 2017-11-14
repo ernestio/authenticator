@@ -5,7 +5,6 @@
 package authenticator
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -87,7 +86,7 @@ func TestVerifyMFA(t *testing.T) {
 		expected         error
 	}{
 		"valid MFA verfication":    {"john", "secret", nil},
-		"invalid MFA verification": {"jane", "wrong", errors.New("verification failed")},
+		"invalid MFA verification": {"jane", "wrong", ErrUnauthorized},
 	}
 
 	for name, tt := range tests {
