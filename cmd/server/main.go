@@ -45,5 +45,10 @@ func main() {
 		panic(err)
 	}
 
+	_, err = nc.Subscribe("config.set.authenticator", getConfig)
+	if err != nil {
+		panic(err)
+	}
+
 	runtime.Goexit()
 }
