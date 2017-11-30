@@ -41,8 +41,10 @@ func authenticationGetHandler(msg *nats.Msg) {
 
 func getConfig(msg *nats.Msg) {
 	time.Sleep(time.Second * 2)
+	auth.Providers = authenticator.Providers{}
 	err := ec.GetConfig("authenticator", &auth)
 	if err != nil {
 		log.Println(err)
 	}
+	log.Println("reloaded authenticator configuration")
 }
