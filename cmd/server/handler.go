@@ -6,6 +6,8 @@ package main
 
 import (
 	"encoding/json"
+	"log"
+	"time"
 
 	"github.com/ernestio/authenticator/pkg/authenticator"
 	"github.com/nats-io/nats"
@@ -35,4 +37,14 @@ func authenticationGetHandler(msg *nats.Msg) {
 	}
 
 	nc.Publish(msg.Reply, []byte(token))
+}
+
+func getConfig(msg *nats.Msg) {
+	time.Sleep(time.Second * 2)
+	auth.Providers = authenticator.Providers{}
+	err := ec.GetConfig("authenticator", &auth)
+	if err != nil {
+		log.Println(err)
+	}
+	log.Println("reloaded authenticator configuration")
 }
