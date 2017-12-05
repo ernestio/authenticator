@@ -18,7 +18,7 @@ import (
 
 var (
 	ErrUnauthorized    = errors.New("Authentication failed")
-	supportedProviders = []string{"local", "federation"}
+	supportedProviders = []string{"local", "federation", "federation-fake"}
 )
 
 // Credentials describes user credentials input
