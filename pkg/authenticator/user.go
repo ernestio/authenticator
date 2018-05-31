@@ -7,6 +7,7 @@ package authenticator
 import (
 	"crypto/subtle"
 	"encoding/base64"
+	"errors"
 
 	"golang.org/x/crypto/scrypt"
 )
@@ -19,6 +20,7 @@ type User struct {
 	Type     string `json:"type"`
 	Salt     string `json:"salt"`
 	Admin    bool   `json:"admin"`
+	Disabled bool   `json:"disabled"`
 }
 
 // HashSize controls the size of the hash for the user password
@@ -27,6 +29,10 @@ const HashSize = 64
 // valid validates a users credentials
 func (u *User) valid(c Credentials) (bool, error) {
 	if c.Username == u.Username {
+		if u.Disabled {
+			return false, errors.New("User account has been disabled")
+		}
+
 		pw, err := base64.StdEncoding.DecodeString(u.Password)
 		if err != nil {
 			return false, err
