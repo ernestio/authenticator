@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/ernestio/authenticator/pkg/authenticator"
-	"github.com/nats-io/nats"
+	"github.com/nats-io/go-nats"
 )
 
 // authenticationGetHandler handles all authentication requests for

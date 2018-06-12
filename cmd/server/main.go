@@ -10,7 +10,7 @@ import (
 
 	"github.com/ernestio/authenticator/pkg/authenticator"
 	ecc "github.com/ernestio/ernest-config-client"
-	"github.com/nats-io/nats"
+	"github.com/nats-io/go-nats"
 )
 
 var (

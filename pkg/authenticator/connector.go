@@ -7,7 +7,7 @@ package authenticator
 import (
 	"time"
 
-	"github.com/nats-io/nats"
+	"github.com/nats-io/go-nats"
 )
 
 // Connector provides an interface to NATS. This allows the service to be
