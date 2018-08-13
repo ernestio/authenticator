@@ -2,112 +2,146 @@
 
 
 [[projects]]
+  digest = "1:56c130d885a4aacae1dd9c7b71cfe39912c7ebc1ff7d2b46083c8812996dc43b"
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
+  pruneopts = ""
   revision = "346938d642f2ec3594ed81d874461961cd0faa76"
   version = "v1.1.0"
 
 [[projects]]
+  digest = "1:bb522d6790c531be0b6631f1110e47623d3307672d66749054fa31ddd8878a7d"
   name = "github.com/dgrijalva/jwt-go"
   packages = ["."]
+  pruneopts = ""
   revision = "d2709f9f1f31ebcda9651b03077758c1f3a0018c"
   version = "v3.0.0"
 
 [[projects]]
   branch = "master"
+  digest = "1:6078f921de2a68b6afbc31dfa1684d600966f4c332063e8daef61758b6a6094e"
   name = "github.com/ernestio/ernest-config-client"
   packages = ["."]
-  revision = "3ae64ad7b8e5b19b31ff8a8e0bedcf807989e42e"
+  pruneopts = ""
+  revision = "9588aab91bdf53d2fa430f9505b33457d3fcb3bc"
 
 [[projects]]
+  digest = "1:d5c1692d62c22b9ff5248d1c5f3850d06f7bc850f9ae6eec15c6601f774eef4f"
   name = "github.com/jinzhu/gorm"
   packages = [
     ".",
-    "dialects/postgres"
+    "dialects/postgres",
   ]
+  pruneopts = ""
   revision = "5174cc5c242a728b435ea2be8a2f7f998e15429b"
   version = "v1.0"
 
 [[projects]]
   branch = "master"
+  digest = "1:a0c0f06f12f4b83b89eec79114265c54e9e300b8ddda0f0f3fb49a685283fa6c"
   name = "github.com/jinzhu/inflection"
   packages = ["."]
+  pruneopts = ""
   revision = "1c35d901db3da928c72a72d8458480cc9ade058f"
 
 [[projects]]
   branch = "master"
+  digest = "1:1559e09937fb91848d3d201213ef6e0aac0a521934d6f88166f0e381f085ef5f"
   name = "github.com/lib/pq"
   packages = [
     ".",
     "hstore",
-    "oid"
+    "oid",
   ]
+  pruneopts = ""
   revision = "e42267488fe361b9dc034be7a6bffef5b195bceb"
 
 [[projects]]
+  digest = "1:36bb8d98af879e2a7747ef28a4c8fc456c470675dce0ff95e97e413b22244299"
   name = "github.com/nats-io/go-nats"
   packages = [
     ".",
     "encoders/builtin",
-    "util"
+    "util",
   ]
+  pruneopts = ""
   revision = "29f9728a183bf3fa7e809e14edac00b33be72088"
   version = "v1.3.0"
 
 [[projects]]
+  digest = "1:be61e8224b84064109eaba8157cbb4bbe6ca12443e182b6624fdfa1c0dcf53d9"
   name = "github.com/nats-io/nuid"
   packages = ["."]
+  pruneopts = ""
   revision = "289cccf02c178dc782430d534e3c1f5b72af807f"
   version = "v1.0.0"
 
 [[projects]]
+  digest = "1:256484dbbcd271f9ecebc6795b2df8cad4c458dd0f5fd82a8c2fa0c29f233411"
   name = "github.com/pmezard/go-difflib"
   packages = ["difflib"]
+  pruneopts = ""
   revision = "792786c7400a136282c1664665ae0a8db921c6c2"
   version = "v1.0.0"
 
 [[projects]]
   branch = "master"
+  digest = "1:c21600df12e3d20bfbbf7457d244d6c6d9690ca88ec64f6412977995c06cdda5"
   name = "github.com/r3labs/akira"
   packages = ["."]
+  pruneopts = ""
   revision = "8754167cb7b314671eb1e2abf2e9465f2e3d5ad4"
 
 [[projects]]
+  digest = "1:3926a4ec9a4ff1a072458451aa2d9b98acd059a45b38f7335d31e06c3d6a0159"
   name = "github.com/stretchr/testify"
   packages = ["assert"]
+  pruneopts = ""
   revision = "69483b4bd14f5845b5a1e55bca19e954e827f1d0"
   version = "v1.1.4"
 
 [[projects]]
   branch = "master"
+  digest = "1:be622bb7d17058279d61dfb985f163090fed1c7e250f35084bb517dedb80a583"
   name = "golang.org/x/crypto"
   packages = [
     "pbkdf2",
-    "scrypt"
+    "scrypt",
   ]
+  pruneopts = ""
   revision = "eb71ad9bd329b5ac0fd0148dd99bd62e8be8e035"
 
 [[projects]]
   branch = "v1"
+  digest = "1:105ec809d993ab248d801e6daef5634115218dec8f77bcbc55f07a97d655ddad"
   name = "gopkg.in/bsm/ratelimit.v1"
   packages = ["."]
+  pruneopts = ""
   revision = "db14e161995a5177acef654cb0dd785e8ee8bc22"
 
 [[projects]]
+  digest = "1:6651284988a9d46d55a68413bdf9850558ee440642449d269f16dbc32a2d3b88"
   name = "gopkg.in/redis.v3"
   packages = [
     ".",
     "internal",
     "internal/consistenthash",
     "internal/hashtag",
-    "internal/pool"
+    "internal/pool",
   ]
+  pruneopts = ""
   revision = "b5e368500d0a508ef8f16e9c2d4025a8a46bcc29"
   version = "v3.6.4"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "c275c925d178502811722c50fed70147c97cfeefd9073e4678656fc5cff795f3"
+  input-imports = [
+    "github.com/dgrijalva/jwt-go",
+    "github.com/ernestio/ernest-config-client",
+    "github.com/nats-io/go-nats",
+    "github.com/stretchr/testify/assert",
+    "golang.org/x/crypto/scrypt",
+  ]
   solver-name = "gps-cdcl"
   solver-version = 1
